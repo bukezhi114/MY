@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快捷键管理器</title>
+<style>
+/* ===== CSS Custom Properties ===== */
+:root {
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #ffffff;
+  --bg-sidebar: #1e1e2e;
+  --bg-sidebar-hover: #2a2a3d;
+  --bg-sidebar-active: #3a3a5c;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-sidebar: #cdd6f4;
+  --text-sidebar-dim: #8b8ba7;
+  --accent: #4a9eff;
+  --accent-hover: #3a8eef;
+  --accent-light: #e8f4fd;
+  --danger: #e74c3c;
+  --danger-hover: #c0392b;
+  --success: #27ae60;
+  --warning: #f39c12;
+  --kbd-bg: #2d2d3f;
+  --kbd-text: #e0e0e0;
+  --kbd-border: #4a4a6a;
+  --border: #e2e8f0;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --transition: 0.2s ease;
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Header ===== */
+#app-header {
+  height: 56px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+  z-index: 100;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.header-left .logo { font-size: 22px; }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  font-family: inherit;
+}
+.btn:hover { background: var(--bg-primary); border-color: #cbd5e0; }
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { background: #fdf2f2; border-color: var(--danger); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-icon {
+  width: 32px; height: 32px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); border: none;
+  background: transparent; color: var(--text-secondary);
+  cursor: pointer; transition: all var(--transition);
+}
+.btn-icon:hover { background: var(--bg-primary); color: var(--text-primary); }
+.btn-icon.danger:hover { background: #fdf2f2; color: var(--danger); }
+
+/* ===== Layout ===== */
+#app-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ===== Sidebar ===== */
+#sidebar {
+  width: 260px;
+  background: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.sidebar-search {
+  padding: 14px;
+  flex-shrink: 0;
+}
+.sidebar-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #3a3a5c;
+  border-radius: var(--radius-sm);
+  background: #16162a;
+  color: var(--text-sidebar);
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+.sidebar-search input::placeholder { color: var(--text-sidebar-dim); }
+.sidebar-search input:focus { border-color: var(--accent); }
+
+#app-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px 14px;
+  list-style: none;
+}
+#app-list::-webkit-scrollbar { width: 4px; }
+#app-list::-webkit-scrollbar-thumb { background: #3a3a5c; border-radius: 2px; }
+
+.app-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-sidebar);
+  font-size: 13px;
+  transition: all var(--transition);
+  margin-bottom: 1px;
+  user-select: none;
+}
+.app-item:hover { background: var(--bg-sidebar-hover); }
+.app-item.active { background: var(--bg-sidebar-active); color: #fff; }
+.app-item .app-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.app-item .app-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-item .app-count {
+  font-size: 11px;
+  color: var(--text-sidebar-dim);
+  background: #2a2a3d;
+  padding: 2px 7px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.app-item.active .app-count { background: #5a5a8a; color: #cdd6f4; }
+
+.sidebar-footer {
+  padding: 10px 14px;
+  border-top: 1px solid #2a2a3d;
+  flex-shrink: 0;
+}
+.sidebar-footer .btn {
+  width: 100%;
+  justify-content: center;
+  background: #2a2a3d;
+  color: var(--text-sidebar);
+  border-color: #3a3a5c;
+}
+.sidebar-footer .btn:hover { background: var(--bg-sidebar-active); }
+
+/* ===== Main Panel ===== */
+#main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.main-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 24px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.main-toolbar .app-title {
+  font-size: 20px;
+  font-weight: 700;
+  flex: 1;
+  min-width: 120px;
+}
+#category-filter {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  font-family: inherit;
+}
+#result-count { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+
+#shortcut-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 24px;
+}
+#shortcut-list::-webkit-scrollbar { width: 6px; }
+#shortcut-list::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+
+/* ===== Shortcut Card ===== */
+.shortcut-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  transition: box-shadow var(--transition);
+  border: 1px solid var(--border);
+}
+.shortcut-card:hover { box-shadow: var(--shadow); }
+
+.shortcut-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 120px;
+}
+.shortcut-keys kbd {
+  display: inline-block;
+  padding: 3px 7px;
+  background: var(--kbd-bg);
+  color: var(--kbd-text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 4px;
+  font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.shortcut-keys .key-plus { color: var(--text-secondary); font-size: 11px; margin: 0 1px; }
+
+.shortcut-info { flex: 1; min-width: 0; }
+.shortcut-info .shortcut-desc {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+.shortcut-info .shortcut-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.shortcut-info .shortcut-desc-en {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.shortcut-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+/* ===== Badges ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.badge-category { background: #ede9fe; color: #7c3aed; }
+.badge-platform { background: #e0f2fe; color: #0369a1; }
+.badge-win { background: #e0f2fe; color: #0369a1; }
+.badge-mac { background: #fce7f3; color: #be185d; }
+.badge-both { background: #d1fae5; color: #065f46; }
+
+/* ===== Empty State ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 14px; opacity: 0.6; }
+.empty-state .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary); }
+.empty-state .empty-desc { font-size: 13px; }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { font-size: 16px; font-weight: 700; }
+.modal-body { padding: 20px; }
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: var(--text-primary);
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--accent);
+}
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-row { display: flex; gap: 10px; }
+.form-row .form-group { flex: 1; }
+
+/* ===== Confirm Dialog ===== */
+.confirm-dialog .modal { max-width: 400px; text-align: center; }
+.confirm-dialog .modal-body { padding: 30px 20px 20px; }
+.confirm-dialog .confirm-icon { font-size: 40px; margin-bottom: 10px; }
+.confirm-dialog .confirm-msg { font-size: 14px; line-height: 1.6; }
+
+/* ===== Import Modal ===== */
+#import-preview { max-height: 200px; overflow-y: auto; font-size: 13px; }
+#import-strategy { margin-top: 14px; }
+#import-strategy label {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px; margin-bottom: 6px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; transition: all var(--transition);
+}
+#import-strategy label:hover { border-color: var(--accent); background: var(--accent-light); }
+#import-strategy input[type="radio"] { margin-top: 2px; }
+#import-strategy .strategy-title { font-weight: 600; font-size: 13px; }
+#import-strategy .strategy-desc { font-size: 12px; color: var(--text-secondary); }
+
+/* ===== Toast ===== */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.3s ease;
+  max-width: 360px;
+}
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.toast-success { background: var(--success); }
+.toast-error { background: var(--danger); }
+.toast-warning { background: var(--warning); color: #333; }
+
+/* ===== Search Highlight ===== */
+mark { background: #fef08a; color: inherit; padding: 0 2px; border-radius: 2px; }
+
+/* ===== Section Header ===== */
+.section-header {
+  padding: 20px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sidebar-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  #app-container { flex-direction: column; }
+  #sidebar {
+    width: 100%;
+    max-height: 200px;
+    flex-shrink: 0;
+  }
+  #app-list {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 8px 8px;
+    gap: 4px;
+  }
+  #app-list::-webkit-scrollbar { height: 4px; }
+  .app-item {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    font-size: 12px;
+    gap: 5px;
+  }
+  .app-item .app-count { display: none; }
+  .sidebar-footer { display: none; }
+  .sidebar-search { padding: 8px; }
+  .sidebar-search input { font-size: 12px; padding: 6px 10px; }
+
+  #main-panel { min-height: 0; }
+  .main-toolbar { padding: 10px 14px; gap: 6px; }
+  .main-toolbar .app-title { font-size: 16px; }
+  #shortcut-list { padding: 0 10px 10px; }
+
+  .shortcut-card { flex-direction: column; gap: 8px; padding: 12px; }
+  .shortcut-actions { align-self: flex-end; }
+
+  .modal { max-width: 95%; }
+  .form-row { flex-direction: column; gap: 0; }
+}
+
+@media (max-width: 400px) {
+  #app-header { padding: 0 10px; }
+  .header-left { font-size: 14px; }
+  .btn { padding: 5px 10px; font-size: 12px; }
+  .shortcut-keys { min-width: auto; }
+  .shortcut-keys kbd { font-size: 10px; padding: 2px 5px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header id="app-header">
+  <div class="header-left">
+    <span class="logo">⌨</span>
+    <span>快捷键管理器</span>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-sm" onclick="importFromJSON()" title="从 JSON 文件导入快捷键">📥 导入</button>
+    <button class="btn btn-sm" onclick="exportAsJSON()" title="导出快捷键到 JSON 文件">📤 导出</button>
+  </div>
+</header>
+
+<!-- ===== App Container ===== -->
+<div id="app-container">
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="sidebar-search">
+      <input type="text" id="search-input" placeholder="🔍 搜索快捷键...">
+    </div>
+    <ul id="app-list"></ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-sm" onclick="openAddAppDialog()">+ 添加应用</button>
+    </div>
+  </aside>
+
+  <!-- Main Panel -->
+  <main id="main-panel">
+    <div class="main-toolbar">
+      <span class="app-title" id="current-app-title">全部应用</span>
+      <select id="category-filter">
+        <option value="全部">全部类别</option>
+      </select>
+      <span id="result-count"></span>
+      <button class="btn btn-primary btn-sm" id="btn-add-shortcut" onclick="openAddModal()">+ 添加快捷键</button>
+    </div>
+    <div id="shortcut-list"></div>
+  </main>
+</div>
+
+<!-- ===== Add/Edit Modal ===== -->
+<div class="modal-overlay" id="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">添加快捷键</h2>
+      <button class="btn-icon" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="form-app-name">应用名称 *</label>
+          <input type="text" id="form-app-name" list="app-datalist" placeholder="例如：VS Code">
+          <datalist id="app-datalist"></datalist>
+        </div>
+        <div class="form-group">
+          <label for="form-category">分类</label>
+          <select id="form-category">
+            <option value="编辑">编辑</option><option value="文件">文件</option>
+            <option value="视图">视图</option><option value="导航">导航</option>
+            <option value="选择">选择</option><option value="工具">工具</option>
+            <option value="窗口">窗口</option><option value="运行/调试">运行/调试</option>
+            <option value="重构">重构</option><option value="图层">图层</option>
+            <option value="时间轴">时间轴</option><option value="变换">变换</option>
+            <option value="渲染">渲染</option><option value="标签页">标签页</option>
+            <option value="书签">书签</option><option value="场景/源">场景/源</option>
+            <option value="录制/直播">录制/直播</option>
+            <option value="音频">音频</option>
+            <option value="格式">格式</option>
+            <option value="公式">公式</option>
+            <option value="演示">演示</option>
+            <option value="模式">模式</option>
+            <option value="对象">对象</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="form-shortcut-keys">快捷键 *</label>
+        <input type="text" id="form-shortcut-keys" placeholder="例如：Ctrl+Shift+P">
+      </div>
+      <div class="form-group">
+        <label for="form-description">功能描述 *</label>
+        <input type="text" id="form-description" placeholder="例如：打开命令面板">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="form-platform">平台</label>
+          <select id="form-platform">
+            <option value="通用">通用</option>
+            <option value="Windows">Windows</option>
+            <option value="macOS">macOS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="form-tags">标签（逗号分隔）</label>
+          <input type="text" id="form-tags" placeholder="例如：终端, 面板">
+        </div>
+      </div>
+      <input type="hidden" id="form-edit-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="submitForm()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Confirm Dialog ===== -->
+<div class="modal-overlay confirm-dialog" id="confirm-dialog" style="display:none">
+  <div class="modal">
+    <div class="modal-body">
+      <div class="confirm-icon">⚠️</div>
+      <p class="confirm-msg" id="confirm-msg"></p>
+    </div>
+    <div class="modal-footer" style="justify-content:center; border-top:none; padding-top:0;">
+      <button class="btn" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-danger" id="confirm-btn">删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Import Modal ===== -->
+<div class="modal-overlay" id="import-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>导入快捷键</h2>
+      <button class="btn-icon" onclick="closeImportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="import-preview"></div>
+      <div id="import-strategy">
+        <label>
+          <input type="radio" name="import-strategy" value="replace">
+          <div>
+            <div class="strategy-title">替换全部</div>
+            <div class="strategy-desc">清空当前数据，使用导入的数据</div>
+          </div>
+        </label>
+        <label>
+          <input type="radio" name="import-strategy" value="merge" checked>
+          <div>
+            <div class="strategy-title">合并</div>
+            <div class="strategy-desc">保留现有数据，添加新的快捷键（跳过重复 ID）</div>
+          </div>
+        </label>
+        <label>
+          <input type="radio" name="import-strategy" value="overwrite">
+          <div>
+            <div class="strategy-title">覆盖更新</div>
+            <div class="strategy-desc">同 ID 则覆盖更新，新的则添加</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeImportModal()">取消</button>
+      <button class="btn btn-primary" id="btn-import-confirm">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast Container ===== -->
+<div id="toast-container"></div>
+
+<!-- Hidden file input for import -->
+<input type="file" id="import-file-input" accept=".json" style="display:none" onchange="handleImportFile(event)">
+
+<script>
+/* ===== 预设快捷键数据库 ===== */
+const DEFAULT_SHORTCUTS = [
+  // ===== VS Code =====
+  { id:'vsc-001', appName:'VS Code', category:'文件', shortcutKeys:'Ctrl+N', description:'新建文件', platform:'通用', tags:['新建'], isBuiltIn:true },
+  { id:'vsc-002', appName:'VS Code', category:'文件', shortcutKeys:'Ctrl+O', description:'打开文件', platform:'通用', tags:['打开'], isBuiltIn:true },
+  { id:'vsc-003', appName:'VS Code', category:'文件', shortcutKeys:'Ctrl+S', description:'保存文件', platform:'通用', tags:['保存'], isBuiltIn:true },
+  { id:'vsc-004', appName:'VS Code', category:'文件', shortcutKeys:'Ctrl+Shift+S', description:'另存为', platform:'通用', tags:['保存'], isBuiltIn:true },
+  { id:'vsc-005', appName:'VS Code', category:'文件', shortcutKeys:'Ctrl+W', description:'关闭当前文件', platform:'通用', tags:['关闭'], isBuiltIn:true },
+  { id:'vsc-006', appName:'VS Code', category:'文件', shortcutKeys:'Ctrl+Shift+N', description:'新建窗口', platform:'通用', tags:['窗口'], isBuiltIn:true },
+  { id:'vsc-007', appName:'VS Code', category:'文件', shortcutKeys:'Ctrl+Shift+W', description:'关闭窗口', platform:'通用', tags:['关闭'], isBuiltIn:true },
+  { id:'vsc-008', appName:'VS Code', category:'文件', shortcutKeys:'Ctrl+K Ctrl+S', description:'打开键盘快捷方式设置', platform:'通用', tags:['设置'], isBuiltIn:true },
+  { id:'vsc-009', appName:'VS Code', category:'编辑', shortcutKeys:'Ctrl+Z', description:'撤销', platform:'通用', tags:['撤销'], isBuiltIn:true },
+  { id:'vsc-010', appName:'VS Code', category:'编辑', shortcutKeys:'Ctrl+Y', description:'重做', platform:'通用', tags:['重做'], isBuiltIn:true },
+  { id:'vsc-011', appName:'VS Code', category:'编辑', shortcutKeys:'Ctrl+X', description:'剪切行（未选择时剪切整行）', platform:'通用', tags:['剪切'], isBuiltIn:true },
+  { id:'vsc-012', appName:'VS Code', category:'编辑', shortcutKeys:'Ctrl+C', description:'复制行（未选择时复制整行）', platform:'通用', tags:['复制'], isBuiltIn:true },
+  { id:'vsc-013', appName:'VS Code', category:'编辑', shortcutKeys:'Ctrl+Shift+K', description:'删除行', platform:'通用', tags:['删除'], isBuiltIn:true },
+  { id:'vsc-014', appName:'VS Code', category:'编辑', shortcutKeys:'Ctrl+Enter', description:'在下方插入行', platform:'通用', tags:['插入'], isBuiltIn:true },
+  { id:'vsc-015', appName:'VS Code', category:'编辑', shortcutKeys:'Ctrl+Shift+Enter', description:'在上方插入行', platform:'通用', tags:['插入'], isBuiltIn:true },
+  { id:'vsc-016', appName:'VS Code', category:'编辑', shortcutKeys:'Alt+Up', description:'向上移动行', platform:'通用', tags:['移动'], isBuiltIn:true },
+  { id:'vsc-017', appName:'VS Code', category:'编辑', shortcutKeys:'Alt+Down', description:'向下移动行', platform:'通用', tags:['移动'], isBuiltIn:true },
+  { id:'vsc-018', appName:'VS Code', category:'编辑', shortcutKeys:'Shift+Alt+Up', description:'向上复制行', platform:'通用', tags:['复制'], isBuiltIn:true },
+  { id:'vsc-019', appName:'VS Code', category:'编辑', shortcutKeys:'Shift+Alt+Down', description:'向下复制行', platform:'通用', tags:['复制'], isBuiltIn:true },
+  { id:'vsc-020', appName:'VS Code', category:'编辑', shortcutKeys:'Ctrl+/', description:'切换行注释', platform:'通用', tags:['注释'], isBuiltIn:true },
+  { id:'vsc-021', appName:'VS Code', category:'编辑', shortcutKeys:'Ctrl+K Ctrl+F', description:'格式化选中内容', platform:'通用', tags:['格式化'], isBuiltIn:true },
+  { id:'vsc-022', appName:'VS Code', category:'编辑', shortcutKeys:'Shift+Alt+F', description:'格式化文档', platform:'通用', tags:['格式化'], isBuiltIn:true },
+  { id:'vsc-023', appName:'VS Code', category:'选择', shortcutKeys:'Ctrl+D', description:'选择下一个相同词', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'vsc-024', appName:'VS Code', category:'选择', shortcutKeys:'Ctrl+Shift+L', description:'选择所有相同词', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'vsc-025', appName:'VS Code', category:'选择', shortcutKeys:'Ctrl+F2', description:'选择所有匹配项', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'vsc-026', appName:'VS Code', category:'视图', shortcutKeys:'Ctrl+B', description:'切换侧边栏可见性', platform:'通用', tags:['侧边栏'], isBuiltIn:true },
+  { id:'vsc-027', appName:'VS Code', category:'视图', shortcutKeys:'Ctrl+`', description:'切换集成终端', platform:'通用', tags:['终端'], isBuiltIn:true },
+  { id:'vsc-028', appName:'VS Code', category:'视图', shortcutKeys:'Ctrl+Shift+E', description:'显示资源管理器', platform:'通用', tags:['侧边栏'], isBuiltIn:true },
+  { id:'vsc-029', appName:'VS Code', category:'视图', shortcutKeys:'Ctrl+Shift+F', description:'显示全局搜索', platform:'通用', tags:['搜索'], isBuiltIn:true },
+  { id:'vsc-030', appName:'VS Code', category:'视图', shortcutKeys:'Ctrl+Shift+G', description:'显示源代码管理', platform:'通用', tags:['Git'], isBuiltIn:true },
+  { id:'vsc-031', appName:'VS Code', category:'视图', shortcutKeys:'Ctrl+Shift+D', description:'显示运行和调试', platform:'通用', tags:['调试'], isBuiltIn:true },
+  { id:'vsc-032', appName:'VS Code', category:'视图', shortcutKeys:'Ctrl+Shift+X', description:'显示扩展', platform:'通用', tags:['扩展'], isBuiltIn:true },
+  { id:'vsc-033', appName:'VS Code', category:'视图', shortcutKeys:'Alt+Z', description:'切换自动换行', platform:'通用', tags:['换行'], isBuiltIn:true },
+  { id:'vsc-034', appName:'VS Code', category:'视图', shortcutKeys:'Ctrl+=', description:'放大', platform:'通用', tags:['缩放'], isBuiltIn:true },
+  { id:'vsc-035', appName:'VS Code', category:'视图', shortcutKeys:'Ctrl+-', description:'缩小', platform:'通用', tags:['缩放'], isBuiltIn:true },
+  { id:'vsc-036', appName:'VS Code', category:'导航', shortcutKeys:'Ctrl+P', description:'快速打开文件', platform:'通用', tags:['文件'], isBuiltIn:true },
+  { id:'vsc-037', appName:'VS Code', category:'导航', shortcutKeys:'Ctrl+G', description:'转到行', platform:'通用', tags:['跳转'], isBuiltIn:true },
+  { id:'vsc-038', appName:'VS Code', category:'导航', shortcutKeys:'Ctrl+Shift+O', description:'转到文件中的符号', platform:'通用', tags:['跳转'], isBuiltIn:true },
+  { id:'vsc-039', appName:'VS Code', category:'导航', shortcutKeys:'F8', description:'转到下一个错误', platform:'通用', tags:['错误'], isBuiltIn:true },
+  { id:'vsc-040', appName:'VS Code', category:'导航', shortcutKeys:'F12', description:'转到定义', platform:'通用', tags:['定义'], isBuiltIn:true },
+  { id:'vsc-041', appName:'VS Code', category:'导航', shortcutKeys:'Shift+F12', description:'查找所有引用', platform:'通用', tags:['引用'], isBuiltIn:true },
+  { id:'vsc-042', appName:'VS Code', category:'导航', shortcutKeys:'Ctrl+Shift+F10', description:'Peek定义', platform:'通用', tags:['定义'], isBuiltIn:true },
+  { id:'vsc-043', appName:'VS Code', category:'运行/调试', shortcutKeys:'F5', description:'开始调试', platform:'通用', tags:['调试'], isBuiltIn:true },
+  { id:'vsc-044', appName:'VS Code', category:'运行/调试', shortcutKeys:'Shift+F5', description:'停止调试', platform:'通用', tags:['调试'], isBuiltIn:true },
+  { id:'vsc-045', appName:'VS Code', category:'运行/调试', shortcutKeys:'F9', description:'切换断点', platform:'通用', tags:['断点'], isBuiltIn:true },
+  { id:'vsc-046', appName:'VS Code', category:'运行/调试', shortcutKeys:'F10', description:'逐过程', platform:'通用', tags:['调试'], isBuiltIn:true },
+  { id:'vsc-047', appName:'VS Code', category:'运行/调试', shortcutKeys:'F11', description:'逐语句', platform:'通用', tags:['调试'], isBuiltIn:true },
+  { id:'vsc-048', appName:'VS Code', category:'重构', shortcutKeys:'F2', description:'重命名符号', platform:'通用', tags:['重命名'], isBuiltIn:true },
+  { id:'vsc-049', appName:'VS Code', category:'重构', shortcutKeys:'Ctrl+Shift+R', description:'重构', platform:'通用', tags:['重构'], isBuiltIn:true },
+  { id:'vsc-050', appName:'VS Code', category:'视图', shortcutKeys:'Ctrl+K Ctrl+T', description:'更改颜色主题', platform:'通用', tags:['主题'], isBuiltIn:true },
+
+  // ===== IntelliJ IDEA =====
+  { id:'ij-001', appName:'IntelliJ IDEA', category:'文件', shortcutKeys:'Ctrl+N', description:'查找类', platform:'通用', tags:['类'], isBuiltIn:true },
+  { id:'ij-002', appName:'IntelliJ IDEA', category:'文件', shortcutKeys:'Ctrl+Shift+N', description:'查找文件', platform:'通用', tags:['文件'], isBuiltIn:true },
+  { id:'ij-003', appName:'IntelliJ IDEA', category:'文件', shortcutKeys:'Ctrl+Shift+Alt+N', description:'查找符号', platform:'通用', tags:['符号'], isBuiltIn:true },
+  { id:'ij-004', appName:'IntelliJ IDEA', category:'导航', shortcutKeys:'Double Shift', description:'全局搜索（Search Everywhere）', platform:'通用', tags:['搜索'], isBuiltIn:true },
+  { id:'ij-005', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Ctrl+Shift+A', description:'查找操作（Find Action）', platform:'通用', tags:['搜索'], isBuiltIn:true },
+  { id:'ij-006', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Ctrl+W', description:'扩展选择', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'ij-007', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Ctrl+Shift+W', description:'收缩选择', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'ij-008', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Ctrl+Y', description:'删除行', platform:'通用', tags:['删除'], isBuiltIn:true },
+  { id:'ij-009', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Ctrl+D', description:'复制行', platform:'通用', tags:['复制'], isBuiltIn:true },
+  { id:'ij-010', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Ctrl+Shift+U', description:'切换大小写', platform:'通用', tags:['大小写'], isBuiltIn:true },
+  { id:'ij-011', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Ctrl+Shift+Enter', description:'自动补全语句结尾', platform:'通用', tags:['补全'], isBuiltIn:true },
+  { id:'ij-012', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Alt+Enter', description:'快速修复（Quick Fix）', platform:'通用', tags:['修复'], isBuiltIn:true },
+  { id:'ij-013', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Alt+Insert', description:'生成代码（Getter/Setter等）', platform:'通用', tags:['生成'], isBuiltIn:true },
+  { id:'ij-014', appName:'IntelliJ IDEA', category:'导航', shortcutKeys:'Ctrl+E', description:'最近文件', platform:'通用', tags:['文件'], isBuiltIn:true },
+  { id:'ij-015', appName:'IntelliJ IDEA', category:'导航', shortcutKeys:'Ctrl+Shift+E', description:'最近位置', platform:'通用', tags:['跳转'], isBuiltIn:true },
+  { id:'ij-016', appName:'IntelliJ IDEA', category:'导航', shortcutKeys:'Ctrl+F12', description:'文件结构', platform:'通用', tags:['结构'], isBuiltIn:true },
+  { id:'ij-017', appName:'IntelliJ IDEA', category:'导航', shortcutKeys:'F2', description:'下一个错误', platform:'通用', tags:['错误'], isBuiltIn:true },
+  { id:'ij-018', appName:'IntelliJ IDEA', category:'导航', shortcutKeys:'Shift+F2', description:'上一个错误', platform:'通用', tags:['错误'], isBuiltIn:true },
+  { id:'ij-019', appName:'IntelliJ IDEA', category:'导航', shortcutKeys:'Ctrl+B', description:'转到声明/定义', platform:'通用', tags:['定义'], isBuiltIn:true },
+  { id:'ij-020', appName:'IntelliJ IDEA', category:'导航', shortcutKeys:'Alt+F7', description:'查找用法', platform:'通用', tags:['引用'], isBuiltIn:true },
+  { id:'ij-021', appName:'IntelliJ IDEA', category:'重构', shortcutKeys:'Shift+F6', description:'重命名', platform:'通用', tags:['重命名'], isBuiltIn:true },
+  { id:'ij-022', appName:'IntelliJ IDEA', category:'重构', shortcutKeys:'Ctrl+Alt+L', description:'格式化代码', platform:'通用', tags:['格式化'], isBuiltIn:true },
+  { id:'ij-023', appName:'IntelliJ IDEA', category:'重构', shortcutKeys:'Ctrl+Alt+O', description:'优化导入', platform:'通用', tags:['导入'], isBuiltIn:true },
+  { id:'ij-024', appName:'IntelliJ IDEA', category:'重构', shortcutKeys:'Ctrl+Alt+M', description:'提取方法', platform:'通用', tags:['重构'], isBuiltIn:true },
+  { id:'ij-025', appName:'IntelliJ IDEA', category:'重构', shortcutKeys:'F6', description:'移动类/文件', platform:'通用', tags:['移动'], isBuiltIn:true },
+  { id:'ij-026', appName:'IntelliJ IDEA', category:'运行/调试', shortcutKeys:'Shift+F10', description:'运行', platform:'通用', tags:['运行'], isBuiltIn:true },
+  { id:'ij-027', appName:'IntelliJ IDEA', category:'运行/调试', shortcutKeys:'Shift+F9', description:'调试', platform:'通用', tags:['调试'], isBuiltIn:true },
+  { id:'ij-028', appName:'IntelliJ IDEA', category:'运行/调试', shortcutKeys:'Ctrl+F8', description:'切换断点', platform:'通用', tags:['断点'], isBuiltIn:true },
+  { id:'ij-029', appName:'IntelliJ IDEA', category:'运行/调试', shortcutKeys:'F7', description:'单步进入', platform:'通用', tags:['调试'], isBuiltIn:true },
+  { id:'ij-030', appName:'IntelliJ IDEA', category:'运行/调试', shortcutKeys:'F8', description:'单步跳过', platform:'通用', tags:['调试'], isBuiltIn:true },
+  { id:'ij-031', appName:'IntelliJ IDEA', category:'窗口', shortcutKeys:'Ctrl+Shift+F12', description:'隐藏所有工具窗口', platform:'通用', tags:['窗口'], isBuiltIn:true },
+  { id:'ij-032', appName:'IntelliJ IDEA', category:'窗口', shortcutKeys:'Alt+1', description:'项目工具窗口', platform:'通用', tags:['窗口'], isBuiltIn:true },
+  { id:'ij-033', appName:'IntelliJ IDEA', category:'窗口', shortcutKeys:'Alt+7', description:'结构工具窗口', platform:'通用', tags:['结构'], isBuiltIn:true },
+  { id:'ij-034', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Ctrl+Shift+↑', description:'向上移动语句', platform:'通用', tags:['移动'], isBuiltIn:true },
+  { id:'ij-035', appName:'IntelliJ IDEA', category:'编辑', shortcutKeys:'Ctrl+Shift+↓', description:'向下移动语句', platform:'通用', tags:['移动'], isBuiltIn:true },
+
+  // ===== Microsoft Word =====
+  { id:'word-001', appName:'Microsoft Word', category:'文件', shortcutKeys:'Ctrl+N', description:'新建文档', platform:'通用', tags:['新建'], isBuiltIn:true },
+  { id:'word-002', appName:'Microsoft Word', category:'文件', shortcutKeys:'Ctrl+O', description:'打开文档', platform:'通用', tags:['打开'], isBuiltIn:true },
+  { id:'word-003', appName:'Microsoft Word', category:'文件', shortcutKeys:'Ctrl+S', description:'保存文档', platform:'通用', tags:['保存'], isBuiltIn:true },
+  { id:'word-004', appName:'Microsoft Word', category:'文件', shortcutKeys:'Ctrl+P', description:'打印文档', platform:'通用', tags:['打印'], isBuiltIn:true },
+  { id:'word-005', appName:'Microsoft Word', category:'编辑', shortcutKeys:'Ctrl+Z', description:'撤销', platform:'通用', tags:['撤销'], isBuiltIn:true },
+  { id:'word-006', appName:'Microsoft Word', category:'编辑', shortcutKeys:'Ctrl+Y', description:'重做', platform:'通用', tags:['重做'], isBuiltIn:true },
+  { id:'word-007', appName:'Microsoft Word', category:'编辑', shortcutKeys:'Ctrl+X', description:'剪切', platform:'通用', tags:['剪切'], isBuiltIn:true },
+  { id:'word-008', appName:'Microsoft Word', category:'编辑', shortcutKeys:'Ctrl+C', description:'复制', platform:'通用', tags:['复制'], isBuiltIn:true },
+  { id:'word-009', appName:'Microsoft Word', category:'编辑', shortcutKeys:'Ctrl+V', description:'粘贴', platform:'通用', tags:['粘贴'], isBuiltIn:true },
+  { id:'word-010', appName:'Microsoft Word', category:'编辑', shortcutKeys:'Ctrl+F', description:'查找', platform:'通用', tags:['查找'], isBuiltIn:true },
+  { id:'word-011', appName:'Microsoft Word', category:'编辑', shortcutKeys:'Ctrl+H', description:'替换', platform:'通用', tags:['替换'], isBuiltIn:true },
+  { id:'word-012', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+B', description:'加粗', platform:'通用', tags:['粗体'], isBuiltIn:true },
+  { id:'word-013', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+I', description:'斜体', platform:'通用', tags:['斜体'], isBuiltIn:true },
+  { id:'word-014', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+U', description:'下划线', platform:'通用', tags:['下划线'], isBuiltIn:true },
+  { id:'word-015', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+L', description:'左对齐', platform:'通用', tags:['对齐'], isBuiltIn:true },
+  { id:'word-016', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+E', description:'居中对齐', platform:'通用', tags:['对齐'], isBuiltIn:true },
+  { id:'word-017', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+R', description:'右对齐', platform:'通用', tags:['对齐'], isBuiltIn:true },
+  { id:'word-018', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+J', description:'两端对齐', platform:'通用', tags:['对齐'], isBuiltIn:true },
+  { id:'word-019', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+1', description:'单倍行距', platform:'通用', tags:['行距'], isBuiltIn:true },
+  { id:'word-020', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+2', description:'双倍行距', platform:'通用', tags:['行距'], isBuiltIn:true },
+  { id:'word-021', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+5', description:'1.5倍行距', platform:'通用', tags:['行距'], isBuiltIn:true },
+  { id:'word-022', appName:'Microsoft Word', category:'编辑', shortcutKeys:'Ctrl+Enter', description:'插入分页符', platform:'通用', tags:['分页'], isBuiltIn:true },
+  { id:'word-023', appName:'Microsoft Word', category:'编辑', shortcutKeys:'F7', description:'拼写和语法检查', platform:'通用', tags:['拼写'], isBuiltIn:true },
+  { id:'word-024', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+Shift+C', description:'复制格式', platform:'通用', tags:['格式刷'], isBuiltIn:true },
+  { id:'word-025', appName:'Microsoft Word', category:'格式', shortcutKeys:'Ctrl+Shift+V', description:'粘贴格式', platform:'通用', tags:['格式刷'], isBuiltIn:true },
+
+  // ===== Microsoft Excel =====
+  { id:'excel-001', appName:'Microsoft Excel', category:'文件', shortcutKeys:'Ctrl+N', description:'新建工作簿', platform:'通用', tags:['新建'], isBuiltIn:true },
+  { id:'excel-002', appName:'Microsoft Excel', category:'文件', shortcutKeys:'Ctrl+O', description:'打开工作簿', platform:'通用', tags:['打开'], isBuiltIn:true },
+  { id:'excel-003', appName:'Microsoft Excel', category:'文件', shortcutKeys:'Ctrl+S', description:'保存工作簿', platform:'通用', tags:['保存'], isBuiltIn:true },
+  { id:'excel-004', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'F2', description:'编辑活动单元格', platform:'通用', tags:['编辑'], isBuiltIn:true },
+  { id:'excel-005', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'F4', description:'重复上次操作 / 切换引用类型', platform:'通用', tags:['重复','引用'], isBuiltIn:true },
+  { id:'excel-006', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'Ctrl+1', description:'设置单元格格式', platform:'通用', tags:['格式'], isBuiltIn:true },
+  { id:'excel-007', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'Ctrl+T', description:'创建表格', platform:'通用', tags:['表格'], isBuiltIn:true },
+  { id:'excel-008', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'Ctrl+Shift+L', description:'切换筛选器', platform:'通用', tags:['筛选'], isBuiltIn:true },
+  { id:'excel-009', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'Ctrl+D', description:'向下填充', platform:'通用', tags:['填充'], isBuiltIn:true },
+  { id:'excel-010', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'Ctrl+R', description:'向右填充', platform:'通用', tags:['填充'], isBuiltIn:true },
+  { id:'excel-011', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'Ctrl+;', description:'插入当前日期', platform:'通用', tags:['日期'], isBuiltIn:true },
+  { id:'excel-012', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'Ctrl+Shift+;', description:'插入当前时间', platform:'通用', tags:['时间'], isBuiltIn:true },
+  { id:'excel-013', appName:'Microsoft Excel', category:'公式', shortcutKeys:'Alt+=', description:'自动求和', platform:'通用', tags:['求和'], isBuiltIn:true },
+  { id:'excel-014', appName:'Microsoft Excel', category:'导航', shortcutKeys:'Ctrl+Home', description:'移动到工作表开头', platform:'通用', tags:['跳转'], isBuiltIn:true },
+  { id:'excel-015', appName:'Microsoft Excel', category:'导航', shortcutKeys:'Ctrl+End', description:'移动到最后一个单元格', platform:'通用', tags:['跳转'], isBuiltIn:true },
+  { id:'excel-016', appName:'Microsoft Excel', category:'导航', shortcutKeys:'F5', description:'转到', platform:'通用', tags:['跳转'], isBuiltIn:true },
+  { id:'excel-017', appName:'Microsoft Excel', category:'导航', shortcutKeys:'Ctrl+PageUp', description:'切换到上一个工作表', platform:'通用', tags:['工作表'], isBuiltIn:true },
+  { id:'excel-018', appName:'Microsoft Excel', category:'导航', shortcutKeys:'Ctrl+PageDown', description:'切换到下一个工作表', platform:'通用', tags:['工作表'], isBuiltIn:true },
+  { id:'excel-019', appName:'Microsoft Excel', category:'选择', shortcutKeys:'Ctrl+A', description:'全选', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'excel-020', appName:'Microsoft Excel', category:'选择', shortcutKeys:'Ctrl+Space', description:'选择整列', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'excel-021', appName:'Microsoft Excel', category:'选择', shortcutKeys:'Shift+Space', description:'选择整行', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'excel-022', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'Ctrl+-', description:'删除单元格', platform:'通用', tags:['删除'], isBuiltIn:true },
+  { id:'excel-023', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'Ctrl+Shift++', description:'插入单元格', platform:'通用', tags:['插入'], isBuiltIn:true },
+  { id:'excel-024', appName:'Microsoft Excel', category:'文件', shortcutKeys:'F11', description:'新建图表工作表', platform:'通用', tags:['图表'], isBuiltIn:true },
+  { id:'excel-025', appName:'Microsoft Excel', category:'文件', shortcutKeys:'Alt+F1', description:'插入嵌入式图表', platform:'通用', tags:['图表'], isBuiltIn:true },
+  { id:'excel-026', appName:'Microsoft Excel', category:'视图', shortcutKeys:'Ctrl+`', description:'显示/隐藏公式', platform:'通用', tags:['公式'], isBuiltIn:true },
+  { id:'excel-027', appName:'Microsoft Excel', category:'编辑', shortcutKeys:'Ctrl+Shift+&', description:'添加外边框', platform:'通用', tags:['边框'], isBuiltIn:true },
+  { id:'excel-028', appName:'Microsoft Excel', category:'导航', shortcutKeys:'Ctrl+Arrow', description:'移动到数据区域边缘', platform:'通用', tags:['跳转'], isBuiltIn:true },
+  { id:'excel-029', appName:'Microsoft Excel', category:'选择', shortcutKeys:'Ctrl+Shift+Arrow', description:'选择到数据区域边缘', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'excel-030', appName:'Microsoft Excel', category:'格式', shortcutKeys:'Ctrl+Shift+$', description:'应用货币格式', platform:'通用', tags:['格式'], isBuiltIn:true },
+
+  // ===== Microsoft PowerPoint =====
+  { id:'ppt-001', appName:'Microsoft PowerPoint', category:'文件', shortcutKeys:'Ctrl+N', description:'新建演示文稿', platform:'通用', tags:['新建'], isBuiltIn:true },
+  { id:'ppt-002', appName:'Microsoft PowerPoint', category:'文件', shortcutKeys:'Ctrl+M', description:'新建幻灯片', platform:'通用', tags:['新建'], isBuiltIn:true },
+  { id:'ppt-003', appName:'Microsoft PowerPoint', category:'文件', shortcutKeys:'Ctrl+D', description:'复制幻灯片', platform:'通用', tags:['复制'], isBuiltIn:true },
+  { id:'ppt-004', appName:'Microsoft PowerPoint', category:'演示', shortcutKeys:'F5', description:'从头开始放映', platform:'通用', tags:['放映'], isBuiltIn:true },
+  { id:'ppt-005', appName:'Microsoft PowerPoint', category:'演示', shortcutKeys:'Shift+F5', description:'从当前幻灯片放映', platform:'通用', tags:['放映'], isBuiltIn:true },
+  { id:'ppt-006', appName:'Microsoft PowerPoint', category:'演示', shortcutKeys:'Ctrl+P', description:'切换为笔（放映时）', platform:'通用', tags:['笔'], isBuiltIn:true },
+  { id:'ppt-007', appName:'Microsoft PowerPoint', category:'演示', shortcutKeys:'Ctrl+E', description:'切换为橡皮擦（放映时）', platform:'通用', tags:['橡皮擦'], isBuiltIn:true },
+  { id:'ppt-008', appName:'Microsoft PowerPoint', category:'演示', shortcutKeys:'W', description:'白屏（放映时）', platform:'通用', tags:['放映'], isBuiltIn:true },
+  { id:'ppt-009', appName:'Microsoft PowerPoint', category:'演示', shortcutKeys:'B', description:'黑屏（放映时）', platform:'通用', tags:['放映'], isBuiltIn:true },
+  { id:'ppt-010', appName:'Microsoft PowerPoint', category:'编辑', shortcutKeys:'Ctrl+G', description:'组合对象', platform:'通用', tags:['组合'], isBuiltIn:true },
+  { id:'ppt-011', appName:'Microsoft PowerPoint', category:'编辑', shortcutKeys:'Ctrl+Shift+G', description:'取消组合', platform:'通用', tags:['组合'], isBuiltIn:true },
+  { id:'ppt-012', appName:'Microsoft PowerPoint', category:'格式', shortcutKeys:'Ctrl+B', description:'加粗', platform:'通用', tags:['粗体'], isBuiltIn:true },
+  { id:'ppt-013', appName:'Microsoft PowerPoint', category:'格式', shortcutKeys:'Ctrl+I', description:'斜体', platform:'通用', tags:['斜体'], isBuiltIn:true },
+  { id:'ppt-014', appName:'Microsoft PowerPoint', category:'格式', shortcutKeys:'Ctrl+U', description:'下划线', platform:'通用', tags:['下划线'], isBuiltIn:true },
+  { id:'ppt-015', appName:'Microsoft PowerPoint', category:'格式', shortcutKeys:'Ctrl+Shift+>', description:'增大字号', platform:'通用', tags:['字号'], isBuiltIn:true },
+  { id:'ppt-016', appName:'Microsoft PowerPoint', category:'格式', shortcutKeys:'Ctrl+Shift+<', description:'减小字号', platform:'通用', tags:['字号'], isBuiltIn:true },
+  { id:'ppt-017', appName:'Microsoft PowerPoint', category:'编辑', shortcutKeys:'Ctrl+Z', description:'撤销', platform:'通用', tags:['撤销'], isBuiltIn:true },
+  { id:'ppt-018', appName:'Microsoft PowerPoint', category:'演示', shortcutKeys:'Esc', description:'结束放映', platform:'通用', tags:['放映'], isBuiltIn:true },
+  { id:'ppt-019', appName:'Microsoft PowerPoint', category:'演示', shortcutKeys:'Ctrl+Enter', description:'跳转到下一张幻灯片', platform:'通用', tags:['放映'], isBuiltIn:true },
+  { id:'ppt-020', appName:'Microsoft PowerPoint', category:'视图', shortcutKeys:'Alt+F9', description:'显示/隐藏参考线', platform:'通用', tags:['参考线'], isBuiltIn:true },
+
+  // ===== Google Chrome =====
+  { id:'chrome-001', appName:'Google Chrome', category:'标签页', shortcutKeys:'Ctrl+T', description:'新建标签页', platform:'通用', tags:['标签'], isBuiltIn:true },
+  { id:'chrome-002', appName:'Google Chrome', category:'标签页', shortcutKeys:'Ctrl+W', description:'关闭当前标签页', platform:'通用', tags:['标签'], isBuiltIn:true },
+  { id:'chrome-003', appName:'Google Chrome', category:'标签页', shortcutKeys:'Ctrl+Shift+T', description:'重新打开已关闭的标签页', platform:'通用', tags:['标签'], isBuiltIn:true },
+  { id:'chrome-004', appName:'Google Chrome', category:'标签页', shortcutKeys:'Ctrl+Tab', description:'切换到下一个标签页', platform:'通用', tags:['标签'], isBuiltIn:true },
+  { id:'chrome-005', appName:'Google Chrome', category:'标签页', shortcutKeys:'Ctrl+Shift+Tab', description:'切换到上一个标签页', platform:'通用', tags:['标签'], isBuiltIn:true },
+  { id:'chrome-006', appName:'Google Chrome', category:'标签页', shortcutKeys:'Ctrl+1', description:'跳转到第1个标签页', platform:'通用', tags:['标签'], isBuiltIn:true },
+  { id:'chrome-007', appName:'Google Chrome', category:'标签页', shortcutKeys:'Ctrl+8', description:'跳转到最后一个标签页', platform:'通用', tags:['标签'], isBuiltIn:true },
+  { id:'chrome-008', appName:'Google Chrome', category:'导航', shortcutKeys:'Ctrl+L', description:'聚焦地址栏', platform:'通用', tags:['地址栏'], isBuiltIn:true },
+  { id:'chrome-009', appName:'Google Chrome', category:'导航', shortcutKeys:'F5', description:'刷新页面', platform:'通用', tags:['刷新'], isBuiltIn:true },
+  { id:'chrome-010', appName:'Google Chrome', category:'导航', shortcutKeys:'Ctrl+F5', description:'强制刷新（清除缓存）', platform:'通用', tags:['刷新'], isBuiltIn:true },
+  { id:'chrome-011', appName:'Google Chrome', category:'导航', shortcutKeys:'Alt+←', description:'后退', platform:'通用', tags:['后退'], isBuiltIn:true },
+  { id:'chrome-012', appName:'Google Chrome', category:'导航', shortcutKeys:'Alt+→', description:'前进', platform:'通用', tags:['前进'], isBuiltIn:true },
+  { id:'chrome-013', appName:'Google Chrome', category:'书签', shortcutKeys:'Ctrl+D', description:'添加书签', platform:'通用', tags:['书签'], isBuiltIn:true },
+  { id:'chrome-014', appName:'Google Chrome', category:'书签', shortcutKeys:'Ctrl+Shift+O', description:'书签管理器', platform:'通用', tags:['书签'], isBuiltIn:true },
+  { id:'chrome-015', appName:'Google Chrome', category:'书签', shortcutKeys:'Ctrl+Shift+B', description:'显示/隐藏书签栏', platform:'通用', tags:['书签'], isBuiltIn:true },
+  { id:'chrome-016', appName:'Google Chrome', category:'工具', shortcutKeys:'Ctrl+H', description:'历史记录', platform:'通用', tags:['历史'], isBuiltIn:true },
+  { id:'chrome-017', appName:'Google Chrome', category:'工具', shortcutKeys:'Ctrl+J', description:'下载内容', platform:'通用', tags:['下载'], isBuiltIn:true },
+  { id:'chrome-018', appName:'Google Chrome', category:'窗口', shortcutKeys:'Ctrl+Shift+N', description:'打开无痕窗口', platform:'通用', tags:['无痕'], isBuiltIn:true },
+  { id:'chrome-019', appName:'Google Chrome', category:'工具', shortcutKeys:'F12', description:'开发者工具', platform:'通用', tags:['开发'], isBuiltIn:true },
+  { id:'chrome-020', appName:'Google Chrome', category:'工具', shortcutKeys:'Ctrl+U', description:'查看页面源代码', platform:'通用', tags:['源码'], isBuiltIn:true },
+
+  // ===== Adobe Photoshop =====
+  { id:'ps-001', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'V', description:'移动工具', platform:'通用', tags:['工具'], isBuiltIn:true },
+  { id:'ps-002', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'M', description:'矩形选框工具', platform:'通用', tags:['选框'], isBuiltIn:true },
+  { id:'ps-003', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'L', description:'套索工具', platform:'通用', tags:['套索'], isBuiltIn:true },
+  { id:'ps-004', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'W', description:'快速选择/魔棒工具', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'ps-005', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'C', description:'裁剪工具', platform:'通用', tags:['裁剪'], isBuiltIn:true },
+  { id:'ps-006', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'B', description:'画笔工具', platform:'通用', tags:['画笔'], isBuiltIn:true },
+  { id:'ps-007', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'S', description:'仿制图章工具', platform:'通用', tags:['图章'], isBuiltIn:true },
+  { id:'ps-008', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'E', description:'橡皮擦工具', platform:'通用', tags:['橡皮擦'], isBuiltIn:true },
+  { id:'ps-009', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'G', description:'渐变/油漆桶工具', platform:'通用', tags:['渐变'], isBuiltIn:true },
+  { id:'ps-010', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'P', description:'钢笔工具', platform:'通用', tags:['钢笔'], isBuiltIn:true },
+  { id:'ps-011', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'T', description:'文字工具', platform:'通用', tags:['文字'], isBuiltIn:true },
+  { id:'ps-012', appName:'Adobe Photoshop', category:'工具', shortcutKeys:'I', description:'吸管工具', platform:'通用', tags:['吸管'], isBuiltIn:true },
+  { id:'ps-013', appName:'Adobe Photoshop', category:'变换', shortcutKeys:'Ctrl+T', description:'自由变换', platform:'通用', tags:['变换'], isBuiltIn:true },
+  { id:'ps-014', appName:'Adobe Photoshop', category:'图层', shortcutKeys:'Ctrl+J', description:'通过拷贝新建图层', platform:'通用', tags:['图层'], isBuiltIn:true },
+  { id:'ps-015', appName:'Adobe Photoshop', category:'图层', shortcutKeys:'Ctrl+Shift+N', description:'新建图层', platform:'通用', tags:['图层'], isBuiltIn:true },
+  { id:'ps-016', appName:'Adobe Photoshop', category:'图层', shortcutKeys:'Ctrl+E', description:'合并图层', platform:'通用', tags:['图层'], isBuiltIn:true },
+  { id:'ps-017', appName:'Adobe Photoshop', category:'编辑', shortcutKeys:'Ctrl+Alt+Z', description:'后退一步', platform:'通用', tags:['撤销'], isBuiltIn:true },
+  { id:'ps-018', appName:'Adobe Photoshop', category:'编辑', shortcutKeys:'Ctrl+Shift+Z', description:'前进一步', platform:'通用', tags:['重做'], isBuiltIn:true },
+  { id:'ps-019', appName:'Adobe Photoshop', category:'视图', shortcutKeys:'Ctrl+0', description:'按屏幕大小缩放', platform:'通用', tags:['缩放'], isBuiltIn:true },
+  { id:'ps-020', appName:'Adobe Photoshop', category:'视图', shortcutKeys:'Ctrl++', description:'放大', platform:'通用', tags:['缩放'], isBuiltIn:true },
+  { id:'ps-021', appName:'Adobe Photoshop', category:'视图', shortcutKeys:'Ctrl+-', description:'缩小', platform:'通用', tags:['缩放'], isBuiltIn:true },
+  { id:'ps-022', appName:'Adobe Photoshop', category:'选择', shortcutKeys:'Ctrl+D', description:'取消选择', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'ps-023', appName:'Adobe Photoshop', category:'选择', shortcutKeys:'Ctrl+Shift+I', description:'反向选择', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'ps-024', appName:'Adobe Photoshop', category:'选择', shortcutKeys:'Ctrl+Alt+R', description:'调整边缘/选择并遮住', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'ps-025', appName:'Adobe Photoshop', category:'编辑', shortcutKeys:'D', description:'恢复默认前景/背景色', platform:'通用', tags:['颜色'], isBuiltIn:true },
+  { id:'ps-026', appName:'Adobe Photoshop', category:'编辑', shortcutKeys:'X', description:'切换前景/背景色', platform:'通用', tags:['颜色'], isBuiltIn:true },
+  { id:'ps-027', appName:'Adobe Photoshop', category:'编辑', shortcutKeys:'[', description:'缩小画笔', platform:'通用', tags:['画笔'], isBuiltIn:true },
+  { id:'ps-028', appName:'Adobe Photoshop', category:'编辑', shortcutKeys:']', description:'放大画笔', platform:'通用', tags:['画笔'], isBuiltIn:true },
+  { id:'ps-029', appName:'Adobe Photoshop', category:'编辑', shortcutKeys:'Shift+[', description:'降低画笔硬度', platform:'通用', tags:['画笔'], isBuiltIn:true },
+  { id:'ps-030', appName:'Adobe Photoshop', category:'编辑', shortcutKeys:'Shift+]', description:'提高画笔硬度', platform:'通用', tags:['画笔'], isBuiltIn:true },
+  { id:'ps-031', appName:'Adobe Photoshop', category:'视图', shortcutKeys:'F', description:'切换屏幕模式', platform:'通用', tags:['屏幕'], isBuiltIn:true },
+  { id:'ps-032', appName:'Adobe Photoshop', category:'图层', shortcutKeys:'Ctrl+G', description:'图层编组', platform:'通用', tags:['图层'], isBuiltIn:true },
+  { id:'ps-033', appName:'Adobe Photoshop', category:'文件', shortcutKeys:'Ctrl+Alt+Shift+S', description:'存储为Web所用格式', platform:'通用', tags:['导出'], isBuiltIn:true },
+  { id:'ps-034', appName:'Adobe Photoshop', category:'图层', shortcutKeys:'Ctrl+[', description:'将图层下移一层', platform:'通用', tags:['图层'], isBuiltIn:true },
+  { id:'ps-035', appName:'Adobe Photoshop', category:'图层', shortcutKeys:'Ctrl+]', description:'将图层上移一层', platform:'通用', tags:['图层'], isBuiltIn:true },
+
+  // ===== Adobe Premiere Pro =====
+  { id:'pr-001', appName:'Adobe Premiere Pro', category:'工具', shortcutKeys:'V', description:'选择工具', platform:'通用', tags:['工具'], isBuiltIn:true },
+  { id:'pr-002', appName:'Adobe Premiere Pro', category:'工具', shortcutKeys:'C', description:'剃刀工具', platform:'通用', tags:['剃刀'], isBuiltIn:true },
+  { id:'pr-003', appName:'Adobe Premiere Pro', category:'工具', shortcutKeys:'B', description:'波纹编辑工具', platform:'通用', tags:['编辑'], isBuiltIn:true },
+  { id:'pr-004', appName:'Adobe Premiere Pro', category:'时间轴', shortcutKeys:'Space', description:'播放/暂停', platform:'通用', tags:['播放'], isBuiltIn:true },
+  { id:'pr-005', appName:'Adobe Premiere Pro', category:'时间轴', shortcutKeys:'J', description:'倒放（按多次加速）', platform:'通用', tags:['播放'], isBuiltIn:true },
+  { id:'pr-006', appName:'Adobe Premiere Pro', category:'时间轴', shortcutKeys:'K', description:'停止', platform:'通用', tags:['播放'], isBuiltIn:true },
+  { id:'pr-007', appName:'Adobe Premiere Pro', category:'时间轴', shortcutKeys:'L', description:'正放（按多次加速）', platform:'通用', tags:['播放'], isBuiltIn:true },
+  { id:'pr-008', appName:'Adobe Premiere Pro', category:'时间轴', shortcutKeys:'I', description:'标记入点', platform:'通用', tags:['标记'], isBuiltIn:true },
+  { id:'pr-009', appName:'Adobe Premiere Pro', category:'时间轴', shortcutKeys:'O', description:'标记出点', platform:'通用', tags:['标记'], isBuiltIn:true },
+  { id:'pr-010', appName:'Adobe Premiere Pro', category:'编辑', shortcutKeys:'Ctrl+K', description:'在播放头处剪切', platform:'通用', tags:['剪切'], isBuiltIn:true },
+  { id:'pr-011', appName:'Adobe Premiere Pro', category:'编辑', shortcutKeys:'Ctrl+Shift+K', description:'剪切所有轨道', platform:'通用', tags:['剪切'], isBuiltIn:true },
+  { id:'pr-012', appName:'Adobe Premiere Pro', category:'编辑', shortcutKeys:'Q', description:'波纹修剪到播放头（前段）', platform:'通用', tags:['修剪'], isBuiltIn:true },
+  { id:'pr-013', appName:'Adobe Premiere Pro', category:'编辑', shortcutKeys:'W', description:'波纹修剪到播放头（后段）', platform:'通用', tags:['修剪'], isBuiltIn:true },
+  { id:'pr-014', appName:'Adobe Premiere Pro', category:'编辑', shortcutKeys:'Ctrl+Z', description:'撤销', platform:'通用', tags:['撤销'], isBuiltIn:true },
+  { id:'pr-015', appName:'Adobe Premiere Pro', category:'视图', shortcutKeys:'`', description:'最大化面板', platform:'通用', tags:['面板'], isBuiltIn:true },
+  { id:'pr-016', appName:'Adobe Premiere Pro', category:'文件', shortcutKeys:'Ctrl+M', description:'导出媒体', platform:'通用', tags:['导出'], isBuiltIn:true },
+  { id:'pr-017', appName:'Adobe Premiere Pro', category:'工具', shortcutKeys:'A', description:'向前轨道选择工具', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'pr-018', appName:'Adobe Premiere Pro', category:'工具', shortcutKeys:'Shift+A', description:'向后轨道选择工具', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'pr-019', appName:'Adobe Premiere Pro', category:'编辑', shortcutKeys:'Delete', description:'删除选中（留空隙）', platform:'通用', tags:['删除'], isBuiltIn:true },
+  { id:'pr-020', appName:'Adobe Premiere Pro', category:'编辑', shortcutKeys:'Shift+Delete', description:'波纹删除（不留空隙）', platform:'通用', tags:['删除'], isBuiltIn:true },
+  { id:'pr-021', appName:'Adobe Premiere Pro', category:'工具', shortcutKeys:'R', description:'比率拉伸工具', platform:'通用', tags:['变速'], isBuiltIn:true },
+  { id:'pr-022', appName:'Adobe Premiere Pro', category:'视图', shortcutKeys:'Ctrl+Shift+/', description:'展开/收起所有轨道', platform:'通用', tags:['轨道'], isBuiltIn:true },
+  { id:'pr-023', appName:'Adobe Premiere Pro', category:'时间轴', shortcutKeys:'Arrow Up', description:'跳转到上一个编辑点', platform:'通用', tags:['跳转'], isBuiltIn:true },
+  { id:'pr-024', appName:'Adobe Premiere Pro', category:'时间轴', shortcutKeys:'Arrow Down', description:'跳转到下一个编辑点', platform:'通用', tags:['跳转'], isBuiltIn:true },
+  { id:'pr-025', appName:'Adobe Premiere Pro', category:'编辑', shortcutKeys:'Ctrl+D', description:'应用默认过渡效果', platform:'通用', tags:['过渡'], isBuiltIn:true },
+
+  // ===== Blender =====
+  { id:'blend-001', appName:'Blender', category:'模式', shortcutKeys:'Tab', description:'切换编辑模式/物体模式', platform:'通用', tags:['模式'], isBuiltIn:true },
+  { id:'blend-002', appName:'Blender', category:'变换', shortcutKeys:'G', description:'移动（Grab）', platform:'通用', tags:['移动'], isBuiltIn:true },
+  { id:'blend-003', appName:'Blender', category:'变换', shortcutKeys:'R', description:'旋转（Rotate）', platform:'通用', tags:['旋转'], isBuiltIn:true },
+  { id:'blend-004', appName:'Blender', category:'变换', shortcutKeys:'S', description:'缩放（Scale）', platform:'通用', tags:['缩放'], isBuiltIn:true },
+  { id:'blend-005', appName:'Blender', category:'编辑', shortcutKeys:'E', description:'挤出（Extrude）', platform:'通用', tags:['挤出'], isBuiltIn:true },
+  { id:'blend-006', appName:'Blender', category:'编辑', shortcutKeys:'Ctrl+R', description:'环切（Loop Cut）', platform:'通用', tags:['切割'], isBuiltIn:true },
+  { id:'blend-007', appName:'Blender', category:'编辑', shortcutKeys:'Shift+D', description:'复制', platform:'通用', tags:['复制'], isBuiltIn:true },
+  { id:'blend-008', appName:'Blender', category:'编辑', shortcutKeys:'X', description:'删除', platform:'通用', tags:['删除'], isBuiltIn:true },
+  { id:'blend-009', appName:'Blender', category:'对象', shortcutKeys:'Ctrl+J', description:'合并对象', platform:'通用', tags:['合并'], isBuiltIn:true },
+  { id:'blend-010', appName:'Blender', category:'视图', shortcutKeys:'Z', description:'着色模式饼菜单', platform:'通用', tags:['着色'], isBuiltIn:true },
+  { id:'blend-011', appName:'Blender', category:'视图', shortcutKeys:'Numpad 0', description:'相机视图', platform:'通用', tags:['视图'], isBuiltIn:true },
+  { id:'blend-012', appName:'Blender', category:'视图', shortcutKeys:'Numpad 1', description:'前视图', platform:'通用', tags:['视图'], isBuiltIn:true },
+  { id:'blend-013', appName:'Blender', category:'视图', shortcutKeys:'Numpad 3', description:'右视图', platform:'通用', tags:['视图'], isBuiltIn:true },
+  { id:'blend-014', appName:'Blender', category:'视图', shortcutKeys:'Numpad 7', description:'顶视图', platform:'通用', tags:['视图'], isBuiltIn:true },
+  { id:'blend-015', appName:'Blender', category:'对象', shortcutKeys:'Shift+A', description:'添加对象', platform:'通用', tags:['添加'], isBuiltIn:true },
+  { id:'blend-016', appName:'Blender', category:'工具', shortcutKeys:'F3', description:'搜索操作', platform:'通用', tags:['搜索'], isBuiltIn:true },
+  { id:'blend-017', appName:'Blender', category:'视图', shortcutKeys:'N', description:'切换侧边栏', platform:'通用', tags:['侧边栏'], isBuiltIn:true },
+  { id:'blend-018', appName:'Blender', category:'视图', shortcutKeys:'T', description:'切换工具栏', platform:'通用', tags:['工具栏'], isBuiltIn:true },
+  { id:'blend-019', appName:'Blender', category:'变换', shortcutKeys:'Alt+G', description:'重置位置', platform:'通用', tags:['重置'], isBuiltIn:true },
+  { id:'blend-020', appName:'Blender', category:'变换', shortcutKeys:'Alt+R', description:'重置旋转', platform:'通用', tags:['重置'], isBuiltIn:true },
+  { id:'blend-021', appName:'Blender', category:'变换', shortcutKeys:'Alt+S', description:'重置缩放', platform:'通用', tags:['重置'], isBuiltIn:true },
+  { id:'blend-022', appName:'Blender', category:'渲染', shortcutKeys:'F12', description:'渲染图像', platform:'通用', tags:['渲染'], isBuiltIn:true },
+  { id:'blend-023', appName:'Blender', category:'渲染', shortcutKeys:'Ctrl+F12', description:'渲染动画', platform:'通用', tags:['渲染'], isBuiltIn:true },
+  { id:'blend-024', appName:'Blender', category:'选择', shortcutKeys:'Ctrl+I', description:'反选', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'blend-025', appName:'Blender', category:'选择', shortcutKeys:'A', description:'全选/取消全选', platform:'通用', tags:['选择'], isBuiltIn:true },
+  { id:'blend-026', appName:'Blender', category:'编辑', shortcutKeys:'Ctrl+B', description:'倒角（Bevel）', platform:'通用', tags:['倒角'], isBuiltIn:true },
+  { id:'blend-027', appName:'Blender', category:'视图', shortcutKeys:'Shift+`', description:'自由飞行视角', platform:'通用', tags:['视角'], isBuiltIn:true },
+  { id:'blend-028', appName:'Blender', category:'对象', shortcutKeys:'M', description:'移动到集合', platform:'通用', tags:['集合'], isBuiltIn:true },
+  { id:'blend-029', appName:'Blender', category:'对象', shortcutKeys:'Ctrl+P', description:'设置父级', platform:'通用', tags:['父子'], isBuiltIn:true },
+  { id:'blend-030', appName:'Blender', category:'对象', shortcutKeys:'Alt+P', description:'清除父级', platform:'通用', tags:['父子'], isBuiltIn:true },
+
+  // ===== OBS Studio =====
+  { id:'obs-001', appName:'OBS Studio', category:'录制/直播', shortcutKeys:'Ctrl+Shift+S', description:'开始/停止直播', platform:'通用', tags:['直播'], isBuiltIn:true },
+  { id:'obs-002', appName:'OBS Studio', category:'录制/直播', shortcutKeys:'Ctrl+Shift+R', description:'开始/停止录制', platform:'通用', tags:['录制'], isBuiltIn:true },
+  { id:'obs-003', appName:'OBS Studio', category:'录制/直播', shortcutKeys:'Ctrl+Shift+P', description:'暂停/恢复录制', platform:'通用', tags:['录制'], isBuiltIn:true },
+  { id:'obs-004', appName:'OBS Studio', category:'场景/源', shortcutKeys:'Ctrl+1~9', description:'切换到场景1~9', platform:'通用', tags:['场景'], isBuiltIn:true },
+  { id:'obs-005', appName:'OBS Studio', category:'场景/源', shortcutKeys:'Ctrl+N', description:'新建场景', platform:'通用', tags:['场景'], isBuiltIn:true },
+  { id:'obs-006', appName:'OBS Studio', category:'场景/源', shortcutKeys:'Ctrl+Shift+N', description:'新建源', platform:'通用', tags:['源'], isBuiltIn:true },
+  { id:'obs-007', appName:'OBS Studio', category:'场景/源', shortcutKeys:'Ctrl+F', description:'为源添加滤镜', platform:'通用', tags:['滤镜'], isBuiltIn:true },
+  { id:'obs-008', appName:'OBS Studio', category:'场景/源', shortcutKeys:'Ctrl+E', description:'编辑场景/源属性', platform:'通用', tags:['编辑'], isBuiltIn:true },
+  { id:'obs-009', appName:'OBS Studio', category:'音频', shortcutKeys:'Ctrl+M', description:'静音/取消静音', platform:'通用', tags:['静音'], isBuiltIn:true },
+  { id:'obs-010', appName:'OBS Studio', category:'音频', shortcutKeys:'Ctrl+Shift+M', description:'全部静音/取消静音', platform:'通用', tags:['静音'], isBuiltIn:true },
+  { id:'obs-011', appName:'OBS Studio', category:'视图', shortcutKeys:'Ctrl+Shift+Z', description:'适应窗口大小', platform:'通用', tags:['缩放'], isBuiltIn:true },
+  { id:'obs-012', appName:'OBS Studio', category:'视图', shortcutKeys:'F11', description:'全屏预览', platform:'通用', tags:['全屏'], isBuiltIn:true },
+  { id:'obs-013', appName:'OBS Studio', category:'其他', shortcutKeys:'Ctrl+Shift+D', description:'显示/隐藏停靠栏', platform:'通用', tags:['界面'], isBuiltIn:true },
+  { id:'obs-014', appName:'OBS Studio', category:'其他', shortcutKeys:'Ctrl+Shift+V', description:'虚拟摄像机开启/关闭', platform:'通用', tags:['虚拟摄像机'], isBuiltIn:true },
+
+  // ===== Windows 系统 =====
+  { id:'win-001', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+D', description:'显示/隐藏桌面', platform:'Windows', tags:['桌面'], isBuiltIn:true },
+  { id:'win-002', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+E', description:'打开文件资源管理器', platform:'Windows', tags:['资源管理器'], isBuiltIn:true },
+  { id:'win-003', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+I', description:'打开设置', platform:'Windows', tags:['设置'], isBuiltIn:true },
+  { id:'win-004', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+L', description:'锁定电脑', platform:'Windows', tags:['锁定'], isBuiltIn:true },
+  { id:'win-005', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+Shift+S', description:'屏幕截图（可选择区域）', platform:'Windows', tags:['截图'], isBuiltIn:true },
+  { id:'win-006', appName:'Windows 系统', category:'工具', shortcutKeys:'Win+V', description:'剪贴板历史记录', platform:'Windows', tags:['剪贴板'], isBuiltIn:true },
+  { id:'win-007', appName:'Windows 系统', category:'工具', shortcutKeys:'Win+.', description:'表情符号面板', platform:'Windows', tags:['表情'], isBuiltIn:true },
+  { id:'win-008', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+Tab', description:'任务视图', platform:'Windows', tags:['任务'], isBuiltIn:true },
+  { id:'win-009', appName:'Windows 系统', category:'窗口', shortcutKeys:'Alt+Tab', description:'切换窗口', platform:'Windows', tags:['切换'], isBuiltIn:true },
+  { id:'win-010', appName:'Windows 系统', category:'工具', shortcutKeys:'Ctrl+Shift+Esc', description:'打开任务管理器', platform:'Windows', tags:['任务管理器'], isBuiltIn:true },
+  { id:'win-011', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+R', description:'运行', platform:'Windows', tags:['运行'], isBuiltIn:true },
+  { id:'win-012', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+←', description:'窗口靠左', platform:'Windows', tags:['窗口'], isBuiltIn:true },
+  { id:'win-013', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+→', description:'窗口靠右', platform:'Windows', tags:['窗口'], isBuiltIn:true },
+  { id:'win-014', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+↑', description:'窗口最大化', platform:'Windows', tags:['窗口'], isBuiltIn:true },
+  { id:'win-015', appName:'Windows 系统', category:'窗口', shortcutKeys:'Win+M', description:'最小化所有窗口', platform:'Windows', tags:['窗口'], isBuiltIn:true },
+
+  // ===== macOS 系统 =====
+  { id:'mac-001', appName:'macOS 系统', category:'工具', shortcutKeys:'Cmd+Space', description:'Spotlight 搜索', platform:'macOS', tags:['搜索'], isBuiltIn:true },
+  { id:'mac-002', appName:'macOS 系统', category:'工具', shortcutKeys:'Cmd+Shift+3', description:'截取整个屏幕', platform:'macOS', tags:['截图'], isBuiltIn:true },
+  { id:'mac-003', appName:'macOS 系统', category:'工具', shortcutKeys:'Cmd+Shift+4', description:'截取选定区域', platform:'macOS', tags:['截图'], isBuiltIn:true },
+  { id:'mac-004', appName:'macOS 系统', category:'工具', shortcutKeys:'Cmd+Shift+5', description:'屏幕录制/截图面板', platform:'macOS', tags:['截图'], isBuiltIn:true },
+  { id:'mac-005', appName:'macOS 系统', category:'窗口', shortcutKeys:'Cmd+Tab', description:'切换应用', platform:'macOS', tags:['切换'], isBuiltIn:true },
+  { id:'mac-006', appName:'macOS 系统', category:'窗口', shortcutKeys:'Cmd+`', description:'切换同一应用的窗口', platform:'macOS', tags:['切换'], isBuiltIn:true },
+  { id:'mac-007', appName:'macOS 系统', category:'窗口', shortcutKeys:'Cmd+H', description:'隐藏当前应用', platform:'macOS', tags:['隐藏'], isBuiltIn:true },
+  { id:'mac-008', appName:'macOS 系统', category:'窗口', shortcutKeys:'Cmd+Option+H', description:'隐藏其他应用', platform:'macOS', tags:['隐藏'], isBuiltIn:true },
+  { id:'mac-009', appName:'macOS 系统', category:'窗口', shortcutKeys:'Cmd+Q', description:'退出应用', platform:'macOS', tags:['退出'], isBuiltIn:true },
+  { id:'mac-010', appName:'macOS 系统', category:'窗口', shortcutKeys:'Cmd+W', description:'关闭窗口', platform:'macOS', tags:['关闭'], isBuiltIn:true },
+  { id:'mac-011', appName:'macOS 系统', category:'窗口', shortcutKeys:'Cmd+M', description:'最小化窗口', platform:'macOS', tags:['最小化'], isBuiltIn:true },
+  { id:'mac-012', appName:'macOS 系统', category:'导航', shortcutKeys:'Ctrl+←', description:'切换到左侧桌面', platform:'macOS', tags:['桌面'], isBuiltIn:true },
+];
+
+/* ===== 状态管理 ===== */
+const STORAGE_KEY = 'shortcut-manager-v2';
+const LAST_APP_KEY = 'shortcut-last-app';
+
+const state = {
+  shortcuts: [],
+  selectedApp: null,
+  searchQuery: '',
+  categoryFilter: '全部',
+  platformFilter: '全部',
+  editTarget: null,
+  pendingImport: null,
+};
+
+/* ===== 持久化层 ===== */
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (Array.isArray(data)) return data;
+    }
+  } catch (e) { /* corrupted data, fall through */ }
+  // First run: save defaults
+  const defaults = JSON.parse(JSON.stringify(DEFAULT_SHORTCUTS));
+  saveData(defaults);
+  return defaults;
+}
+
+function saveData(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data || state.shortcuts));
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      showToast('存储空间不足，请导出数据后清理', 'error');
+    }
+  }
+}
+
+/* ===== 工具函数 ===== */
+function debounce(fn, delay) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function generateId() {
+  return 'u-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+function getAppIcon(name) {
+  const icons = {
+    'VS Code': '💻', 'IntelliJ IDEA': '☕', 'Microsoft Word': '📝',
+    'Microsoft Excel': '📊', 'Microsoft PowerPoint': '📽️', 'Google Chrome': '🌐',
+    'Adobe Photoshop': '🎨', 'Adobe Premiere Pro': '🎬', 'Blender': '🔷',
+    'OBS Studio': '📹', 'Windows 系统': '🪟', 'macOS 系统': '🍎',
+  };
+  return icons[name] || '📁';
+}
+
+/* ===== 过滤引擎 ===== */
+function getFilteredShortcuts() {
+  let results = state.shortcuts;
+
+  if (state.selectedApp && state.selectedApp !== '全部') {
+    results = results.filter(s => s.appName === state.selectedApp);
+  }
+
+  if (state.searchQuery) {
+    const q = state.searchQuery.toLowerCase();
+    results = results.filter(s =>
+      s.appName.toLowerCase().includes(q) ||
+      s.shortcutKeys.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q) ||
+      (s.tags && s.tags.some(t => t.toLowerCase().includes(q)))
+    );
+  }
+
+  if (state.categoryFilter !== '全部') {
+    results = results.filter(s => s.category === state.categoryFilter);
+  }
+
+  if (state.platformFilter !== '全部') {
+    results = results.filter(s =>
+      s.platform === '通用' || s.platform === state.platformFilter
+    );
+  }
+
+  return results;
+}
+
+function getApps() {
+  const map = new Map();
+  state.shortcuts.forEach(s => {
+    if (!map.has(s.appName)) map.set(s.appName, { count: 0, icon: getAppIcon(s.appName) });
+    map.get(s.appName).count++;
+  });
+  const apps = Array.from(map.entries()).map(([name, info]) => ({
+    name, count: info.count, icon: info.icon,
+  }));
+  // Pin popular apps to the top
+  const pinned = ['VS Code', 'IntelliJ IDEA', 'Microsoft Word', 'Microsoft Excel', 'Google Chrome', 'Adobe Photoshop', 'Blender', 'OBS Studio'];
+  const pinnedApps = pinned.filter(p => apps.find(a => a.name === p)).map(p => apps.find(a => a.name === p));
+  const otherApps = apps.filter(a => !pinned.includes(a.name));
+  otherApps.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+  return [...pinnedApps, ...otherApps];
+}
+
+function getCategoriesForApp(appName) {
+  const cats = new Set();
+  const shortcuts = appName && appName !== '全部'
+    ? state.shortcuts.filter(s => s.appName === appName)
+    : state.shortcuts;
+  shortcuts.forEach(s => cats.add(s.category));
+  return ['全部', ...Array.from(cats).sort((a, b) => a.localeCompare(b, 'zh'))];
+}
+
+/* ===== 渲染 ===== */
+function highlightText(text, query) {
+  if (!query) return escapeHTML(text);
+  const escaped = escapeHTML(text);
+  const escapedQuery = escapeHTML(query);
+  const re = new RegExp(`(${escapedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return escaped.replace(re, '<mark>$1</mark>');
+}
+
+function renderShortcutKeys(keys) {
+  return keys.split('+').map(k => `<kbd>${escapeHTML(k.trim())}</kbd>`).join('<span class="key-plus">+</span>');
+}
+
+function renderAppList() {
+  const apps = getApps();
+  const query = state.searchQuery.toLowerCase();
+
+  // Filter apps by search if searching across all
+  let filteredApps = apps;
+  if (query && (!state.selectedApp || state.selectedApp === '全部')) {
+    filteredApps = apps.filter(a => {
+      if (a.name.toLowerCase().includes(query)) return true;
+      const appShortcuts = state.shortcuts.filter(s => s.appName === a.name);
+      return appShortcuts.some(s =>
+        s.shortcutKeys.toLowerCase().includes(query) ||
+        s.description.toLowerCase().includes(query)
+      );
+    });
+  }
+
+  const list = document.getElementById('app-list');
+  let html = '<li class="app-item' + (!state.selectedApp ? ' active' : '') + '" data-app="全部"><span class="app-icon">📋</span><span class="app-name">全部应用</span><span class="app-count">' + state.shortcuts.length + '</span></li>';
+
+  // Separate pinned from others
+  const pinned = filteredApps.filter(a => ['VS Code', 'IntelliJ IDEA', 'Microsoft Word', 'Microsoft Excel', 'Google Chrome', 'Adobe Photoshop', 'Blender', 'OBS Studio'].includes(a.name));
+  const others = filteredApps.filter(a => !['VS Code', 'IntelliJ IDEA', 'Microsoft Word', 'Microsoft Excel', 'Google Chrome', 'Adobe Photoshop', 'Blender', 'OBS Studio'].includes(a.name));
+
+  if (pinned.length) {
+    html += '<div class="section-header">常用软件</div>';
+    pinned.forEach(app => {
+      html += `<li class="app-item${state.selectedApp === app.name ? ' active' : ''}" data-app="${escapeHTML(app.name)}">
+        <span class="app-icon">${app.icon}</span>
+        <span class="app-name">${escapeHTML(app.name)}</span>
+        <span class="app-count">${app.count}</span>
+      </li>`;
+    });
+  }
+  if (others.length) {
+    html += '<div class="section-header">其他应用</div>';
+    others.forEach(app => {
+      html += `<li class="app-item${state.selectedApp === app.name ? ' active' : ''}" data-app="${escapeHTML(app.name)}">
+        <span class="app-icon">${app.icon}</span>
+        <span class="app-name">${escapeHTML(app.name)}</span>
+        <span class="app-count">${app.count}</span>
+      </li>`;
+    });
+  }
+  if (filteredApps.length === 0 && !query) {
+    html += '<li style="padding:20px;color:#8b8ba7;text-align:center;font-size:12px;">暂无应用</li>';
+  }
+
+  list.innerHTML = html;
+
+  // Bind click events
+  list.querySelectorAll('.app-item').forEach(item => {
+    item.addEventListener('click', () => {
+      state.selectedApp = item.dataset.app === '全部' ? null : item.dataset.app;
+      if (state.selectedApp) {
+        localStorage.setItem(LAST_APP_KEY, state.selectedApp);
+      } else {
+        localStorage.removeItem(LAST_APP_KEY);
+      }
+      state.categoryFilter = '全部';
+      renderAll();
+    });
+  });
+}
+
+function renderShortcutList() {
+  const shortcuts = getFilteredShortcuts();
+  const container = document.getElementById('shortcut-list');
+  const countEl = document.getElementById('result-count');
+
+  // Update toolbar
+  const titleEl = document.getElementById('current-app-title');
+  titleEl.textContent = state.selectedApp ? state.selectedApp + ' 快捷键' : '全部快捷键';
+
+  // Update category filter
+  const catFilter = document.getElementById('category-filter');
+  const cats = getCategoriesForApp(state.selectedApp);
+  catFilter.innerHTML = cats.map(c => `<option value="${c}"${state.categoryFilter === c ? ' selected' : ''}>${c}</option>`).join('');
+
+  countEl.textContent = `共 ${shortcuts.length} 条`;
+
+  // Update add button behavior
+  const addBtn = document.getElementById('btn-add-shortcut');
+  addBtn.style.display = state.selectedApp ? '' : 'none';
+
+  if (shortcuts.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">${state.searchQuery ? '未找到匹配的快捷键' : '暂无快捷键'}</div>
+      <div class="empty-desc">${state.searchQuery ? '尝试其他搜索词' : (state.selectedApp ? '点击"+ 添加快捷键"添加' : '选择左侧应用查看快捷键')}</div>
+    </div>`;
+    return;
+  }
+
+  // Group by category
+  const grouped = {};
+  shortcuts.forEach(s => {
+    if (!grouped[s.category]) grouped[s.category] = [];
+    grouped[s.category].push(s);
+  });
+
+  let html = '';
+  const categories = Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'zh'));
+  categories.forEach(cat => {
+    html += `<div style="font-size:11px;font-weight:700;color:var(--text-secondary);padding:16px 0 6px;text-transform:uppercase;letter-spacing:0.5px;">${cat}</div>`;
+    grouped[cat].forEach(s => {
+      const q = state.searchQuery;
+      html += `<div class="shortcut-card">
+        <div class="shortcut-keys">${renderShortcutKeys(s.shortcutKeys)}</div>
+        <div class="shortcut-info">
+          <div class="shortcut-desc">${highlightText(s.description, q)}</div>
+          <div class="shortcut-sub">
+            <span class="badge badge-category">${escapeHTML(s.category)}</span>
+            <span class="badge ${s.platform === 'Windows' ? 'badge-win' : s.platform === 'macOS' ? 'badge-mac' : 'badge-both'}">${escapeHTML(s.platform)}</span>
+          </div>
+        </div>
+        <div class="shortcut-actions">
+          <button class="btn-icon" title="编辑" onclick="openEditModal('${s.id}')">✏️</button>
+          <button class="btn-icon danger" title="删除" onclick="confirmDelete('${s.id}')">🗑️</button>
+        </div>
+      </div>`;
+    });
+  });
+
+  container.innerHTML = html;
+}
+
+function renderAll() {
+  renderAppList();
+  renderShortcutList();
+}
+
+/* ===== CRUD ===== */
+function openAddModal(appName) {
+  state.editTarget = null;
+  document.getElementById('modal-title').textContent = '添加快捷键';
+  document.getElementById('form-app-name').value = appName || state.selectedApp || '';
+  document.getElementById('form-category').value = '编辑';
+  document.getElementById('form-shortcut-keys').value = '';
+  document.getElementById('form-description').value = '';
+  document.getElementById('form-platform').value = '通用';
+  document.getElementById('form-tags').value = '';
+  document.getElementById('form-edit-id').value = '';
+  updateAppDatalist();
+  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById('form-shortcut-keys').focus();
+}
+
+function openEditModal(id) {
+  const s = state.shortcuts.find(sc => sc.id === id);
+  if (!s) return;
+  state.editTarget = s;
+  document.getElementById('modal-title').textContent = '编辑快捷键';
+  document.getElementById('form-app-name').value = s.appName;
+  document.getElementById('form-category').value = s.category;
+  document.getElementById('form-shortcut-keys').value = s.shortcutKeys;
+  document.getElementById('form-description').value = s.description;
+  document.getElementById('form-platform').value = s.platform;
+  document.getElementById('form-tags').value = (s.tags || []).join(', ');
+  document.getElementById('form-edit-id').value = s.id;
+  updateAppDatalist();
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+function updateAppDatalist() {
+  const apps = getApps().map(a => a.name);
+  document.getElementById('app-datalist').innerHTML = apps.map(n => `<option value="${escapeHTML(n)}">`).join('');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+
+function submitForm() {
+  const appName = document.getElementById('form-app-name').value.trim();
+  const shortcutKeys = document.getElementById('form-shortcut-keys').value.trim();
+
+  if (!appName || !shortcutKeys) {
+    showToast('应用名称和快捷键为必填项', 'error');
+    return;
+  }
+
+  const data = {
+    appName,
+    category: document.getElementById('form-category').value,
+    shortcutKeys,
+    description: document.getElementById('form-description').value.trim(),
+    platform: document.getElementById('form-platform').value,
+    tags: document.getElementById('form-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+  };
+
+  const editId = document.getElementById('form-edit-id').value;
+  if (editId) {
+    // Edit existing
+    const idx = state.shortcuts.findIndex(s => s.id === editId);
+    if (idx !== -1) {
+      state.shortcuts[idx] = { ...state.shortcuts[idx], ...data };
+    }
+    showToast('快捷键已更新', 'success');
+  } else {
+    // Add new
+    state.shortcuts.push({
+      id: generateId(),
+      ...data,
+      isBuiltIn: false,
+    });
+    showToast('快捷键已添加', 'success');
+  }
+
+  // Auto-select the app
+  if (!state.selectedApp || state.selectedApp !== appName) {
+    state.selectedApp = appName;
+    localStorage.setItem(LAST_APP_KEY, appName);
+  }
+
+  saveData();
+  closeModal();
+  renderAll();
+}
+
+function confirmDelete(id) {
+  const s = state.shortcuts.find(sc => sc.id === id);
+  if (!s) return;
+  document.getElementById('confirm-msg').textContent = `确定要删除 "${s.shortcutKeys} - ${s.description}" 吗？`;
+  document.getElementById('confirm-btn').onclick = () => {
+    deleteShortcut(id);
+    closeConfirm();
+  };
+  document.getElementById('confirm-dialog').style.display = 'flex';
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-dialog').style.display = 'none';
+}
+
+function deleteShortcut(id) {
+  const idx = state.shortcuts.findIndex(s => s.id === id);
+  if (idx !== -1) {
+    const s = state.shortcuts[idx];
+    state.shortcuts.splice(idx, 1);
+    saveData();
+    renderAll();
+    showToast(`已删除 "${s.shortcutKeys}"`, 'success');
+  }
+}
+
+function openAddAppDialog() {
+  const appName = prompt('请输入应用名称：');
+  if (appName && appName.trim()) {
+    state.selectedApp = appName.trim();
+    localStorage.setItem(LAST_APP_KEY, state.selectedApp);
+    state.categoryFilter = '全部';
+    renderAll();
+    openAddModal(appName.trim());
+  }
+}
+
+/* ===== 导入导出 ===== */
+function exportAsJSON() {
+  const data = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    totalShortcuts: state.shortcuts.length,
+    shortcuts: state.shortcuts,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `shortcuts-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('导出成功', 'success');
+}
+
+function importFromJSON() {
+  document.getElementById('import-file-input').click();
+}
+
+function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.shortcuts || !Array.isArray(data.shortcuts)) {
+        throw new Error('格式错误');
+      }
+      state.pendingImport = data.shortcuts;
+      // Show preview
+      const preview = document.getElementById('import-preview');
+      const appCount = new Set(data.shortcuts.map(s => s.appName)).size;
+      preview.innerHTML = `
+        <p>📦 <strong>${data.shortcuts.length}</strong> 条快捷键，覆盖 <strong>${appCount}</strong> 个应用</p>
+        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">导出时间: ${data.exportedAt || '未知'}</p>
+        <p style="font-size:12px;color:var(--text-secondary);">版本: ${data.version || '未知'}</p>
+      `;
+      document.querySelector('input[name="import-strategy"][value="merge"]').checked = true;
+      document.getElementById('import-modal').style.display = 'flex';
+      document.getElementById('btn-import-confirm').onclick = applyImport;
+    } catch (err) {
+      showToast('文件格式不正确，请选择有效的 .json 文件', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function applyImport() {
+  if (!state.pendingImport) return;
+  const strategy = document.querySelector('input[name="import-strategy"]:checked').value;
+  const imported = state.pendingImport;
+
+  switch (strategy) {
+    case 'replace':
+      state.shortcuts = imported;
+      break;
+    case 'merge':
+      const existingIds = new Set(state.shortcuts.map(s => s.id));
+      const newItems = imported.filter(s => !existingIds.has(s.id));
+      state.shortcuts = [...state.shortcuts, ...newItems];
+      break;
+    case 'overwrite':
+      const idMap = new Map(state.shortcuts.map(s => [s.id, s]));
+      imported.forEach(s => { idMap.set(s.id, s); });
+      state.shortcuts = Array.from(idMap.values());
+      break;
+  }
+
+  state.pendingImport = null;
+  saveData();
+  closeImportModal();
+  renderAll();
+  showToast('导入成功', 'success');
+}
+
+function closeImportModal() {
+  document.getElementById('import-modal').style.display = 'none';
+  state.pendingImport = null;
+}
+
+/* ===== Toast ===== */
+function showToast(msg, type) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-' + (type || 'success');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
+
+/* ===== 事件绑定 ===== */
+const debouncedSearch = debounce(() => {
+  state.searchQuery = document.getElementById('search-input').value;
+  // If searching and currently in single-app view, switch to all apps
+  if (state.searchQuery && state.selectedApp) {
+    // Keep selectedApp but app list will filter
+  }
+  renderAll();
+}, 150);
+
+document.getElementById('search-input').addEventListener('input', debouncedSearch);
+
+document.getElementById('category-filter').addEventListener('change', function() {
+  state.categoryFilter = this.value;
+  renderShortcutList();
+});
+
+/* ===== 键盘操作 ===== */
+document.addEventListener('keydown', function(e) {
+  // Ctrl+F / Cmd+F: focus search
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    e.preventDefault();
+    document.getElementById('search-input').focus();
+  }
+  // Escape: close modals
+  if (e.key === 'Escape') {
+    if (document.getElementById('modal-overlay').style.display === 'flex') {
+      closeModal();
+    } else if (document.getElementById('confirm-dialog').style.display === 'flex') {
+      closeConfirm();
+    } else if (document.getElementById('import-modal').style.display === 'flex') {
+      closeImportModal();
+    } else {
+      document.getElementById('search-input').value = '';
+      state.searchQuery = '';
+      renderAll();
+    }
+  }
+});
+
+// Close modals on overlay click
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('confirm-dialog').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
+document.getElementById('import-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeImportModal();
+});
+
+/* ===== 初始化 ===== */
+(function init() {
+  state.shortcuts = loadData();
+  const lastApp = localStorage.getItem(LAST_APP_KEY);
+  if (lastApp && state.shortcuts.some(s => s.appName === lastApp)) {
+    state.selectedApp = lastApp;
+  }
+  renderAll();
+})();
+</script>
+</body>
+</html>
